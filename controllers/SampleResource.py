@@ -32,12 +32,6 @@ class SampleResource(Resource):
                 err.messages
             )
 
-        # run a background service
-        from scheduler import sched, say_hi
-        sched.add_job(
-            say_hi
-        )
-
         return response_message(
             'success',
             200,

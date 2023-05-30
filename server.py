@@ -1,27 +1,15 @@
 import os
 
 from flask import Flask, jsonify
-from flask_script import Manager
-from flask_migrate import Migrate, MigrateCommand
 from flask_cors import CORS
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 from pathlib import Path
 from dotenv import load_dotenv
+from config import app_configuration
+from routes import api
 
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
-
-try:
-    from config import app_configuration
-
-    from models import db
-    from routes import api
-except:
-    from .config import app_configuration
-
-    from .models import db
-    from .routes import api
 
 # function that creates the flask app, initializes the db and sets the routes
 def create_flask_app(environment):
@@ -31,18 +19,6 @@ def create_flask_app(environment):
     cors = CORS(app, resources={r"/*": {"origins": "*"}})
     app.config.from_object(app_configuration[environment])
     app.config['BUNDLE_ERRORS'] = True
-
-    # initialize SQLAlchemy
-    db.init_app(app)
-
-    # initialize migration commands
-    migrate = Migrate(app, db)
-
-     # initialize flask script manager
-    manager = Manager(app)
-
-    # Add database migration command
-    manager.add_command('db', MigrateCommand)
 
     # landing route
     @app.route('/')
@@ -82,10 +58,4 @@ def create_flask_app(environment):
 app = create_flask_app(os.getenv('FLASK_CONFIG'))
 
 if __name__ == "__main__":
-    from scheduler import sched
-
-    # Testing
-    sched.add_jobstore(SQLAlchemyJobStore(url=os.getenv('JOB_STORE')), 'default')
-    sched.start()
-
     app.run(host='0.0.0.0', port=os.getenv('PORT'))
